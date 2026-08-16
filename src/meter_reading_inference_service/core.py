@@ -325,6 +325,27 @@ def check_ocr_asset(model_path: str | Path | None) -> tuple[str, str | None]:
     return "AVAILABLE", None
 
 
+def check_detector_runtime() -> tuple[str, str | None]:
+    """Check if the required Ultralytics detector runtime package is installed with supported version.
+
+    Returns (runtime_status, error_message):
+    status is 'AVAILABLE', 'MISSING', or 'INCOMPATIBLE'.
+    """
+    try:
+        ultralytics_mod = importlib.import_module("ultralytics")
+    except ModuleNotFoundError:
+        return "MISSING", "Ultralytics detector runtime is not installed"
+    except Exception as exc:
+        logger.warning("Failed to import detector runtime: %s", exc)
+        return "INCOMPATIBLE", "Ultralytics detector runtime could not be imported"
+
+    det_ver = getattr(ultralytics_mod, "__version__", "unknown")
+    if det_ver != "8.4.120":
+        return "INCOMPATIBLE", f"Ultralytics version {det_ver!r} is incompatible (expected 8.4.120)"
+
+    return "AVAILABLE", None
+
+
 def check_detector_asset(
     model_path: str | Path | None,
     expected_sha256: str | None = None,

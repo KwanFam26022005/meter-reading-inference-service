@@ -168,6 +168,7 @@ class InferenceCoordinator:
         calibration_status: str = "UNSPECIFIED",
         ocr_runtime_status: str = "MISSING",
         ocr_asset_status: str = "MISSING",
+        detector_runtime_status: str = "MISSING",
         detector_asset_status: str = "MISSING",
         artifact_storage_status: str = "UNAVAILABLE",
         readiness_reason: str | None = None,
@@ -182,6 +183,7 @@ class InferenceCoordinator:
         self.calibration_status = calibration_status
         self.ocr_runtime_status = ocr_runtime_status
         self.ocr_asset_status = ocr_asset_status
+        self.detector_runtime_status = detector_runtime_status
         self.detector_asset_status = detector_asset_status
         self.artifact_storage_status = artifact_storage_status
         self.readiness_reason = readiness_reason

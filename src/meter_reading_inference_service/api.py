@@ -70,6 +70,7 @@ async def models_status(request: Request) -> ModelsStatusResponse:
             ),
             detector=DetectorStatus(
                 model_id="none",
+                runtime_status="NOT_EVALUATED",
                 asset_status="NOT_EVALUATED",
                 required_for_default=False,
             ),
@@ -95,17 +96,20 @@ async def models_status(request: Request) -> ModelsStatusResponse:
     cal_status = coordinator.calibration_status
     rec_runtime = coordinator.ocr_runtime_status
     rec_asset = coordinator.ocr_asset_status
+    det_runtime = getattr(coordinator, "detector_runtime_status", "NOT_EVALUATED")
     det_asset = coordinator.detector_asset_status
     art_storage = getattr(coordinator, "artifact_storage_status", "UNAVAILABLE")
 
     configured_ready = coordinator.is_ready
-    det_available = det_asset == "AVAILABLE"
-    shadow_ready = configured_ready and det_available
+    det_asset_ready = det_asset == "AVAILABLE"
+    det_runtime_ready = det_runtime == "AVAILABLE"
+    shadow_telemetry_ready = det_asset_ready and det_runtime_ready
+    shadow_mode_ready = configured_ready and shadow_telemetry_ready
 
     overall_status: str
     if not configured_ready:
         overall_status = "not_ready"
-    elif not det_available:
+    elif not shadow_telemetry_ready:
         overall_status = "degraded"
     else:
         overall_status = "ready"
@@ -144,6 +148,7 @@ async def models_status(request: Request) -> ModelsStatusResponse:
         ),
         detector=DetectorStatus(
             model_id=det_model_id,
+            runtime_status=det_runtime,
             asset_status=det_asset,
             required_for_default=False,
         ),
@@ -152,9 +157,9 @@ async def models_status(request: Request) -> ModelsStatusResponse:
             supported_meter_types=supported_mtypes,
             default_localization_profiles=settings.default_localization_profiles,
             configured_mode_ready=configured_ready,
-            learned_shadow_mode_ready=shadow_ready,
+            learned_shadow_mode_ready=shadow_mode_ready,
             learned_shadow_decision_path_ready=configured_ready,
-            learned_shadow_telemetry_ready=det_available,
+            learned_shadow_telemetry_ready=shadow_telemetry_ready,
             learned_primary_enabled=settings.enable_learned_primary,
         ),
     )

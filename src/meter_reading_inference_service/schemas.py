@@ -41,6 +41,7 @@ class RecognitionStatus(BaseModel):
 
 class DetectorStatus(BaseModel):
     model_id: str
+    runtime_status: str = "NOT_EVALUATED"
     asset_status: str
     required_for_default: bool = False
 

@@ -266,6 +266,7 @@ def test_app(
         calibration_status="CALIBRATED",
         ocr_runtime_status="AVAILABLE",
         ocr_asset_status="AVAILABLE",
+        detector_runtime_status="AVAILABLE",
         detector_asset_status="AVAILABLE",
         artifact_storage_status="AVAILABLE",
     )

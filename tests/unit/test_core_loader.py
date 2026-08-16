@@ -20,6 +20,7 @@ from meter_reading_inference_service.core import (
     check_core_import_origin,
     check_core_revision,
     check_detector_asset,
+    check_detector_runtime,
     check_ocr_asset,
     check_ocr_runtime,
     get_yaml_calibration_status,
@@ -189,6 +190,60 @@ def test_detector_asset_preflight(tmp_path: Path) -> None:
     assert status == "INVALID"
     assert err is not None
     assert "mismatch" in err.lower()
+
+
+def test_check_detector_runtime_missing() -> None:
+    """A1-H1: ModuleNotFoundError during ultralytics import returns MISSING with generic message."""
+    with patch(
+        "importlib.import_module",
+        side_effect=ModuleNotFoundError("No module named 'ultralytics'", name="ultralytics"),
+    ):
+        status, err = check_detector_runtime()
+    assert status == "MISSING"
+    assert err == "Ultralytics detector runtime is not installed"
+
+
+def test_check_detector_runtime_incompatible_import_error() -> None:
+    """A1-H1: Non-ModuleNotFoundError exception during ultralytics import returns INCOMPATIBLE with generic message."""
+    with patch("importlib.import_module", side_effect=ImportError("DLL initialization failed")):
+        status, err = check_detector_runtime()
+    assert status == "INCOMPATIBLE"
+    assert err == "Ultralytics detector runtime could not be imported"
+
+
+def test_check_detector_runtime_incompatible_sanitizes_path_leak() -> None:
+    """A1-H1: Generic import/runtime exceptions with path strings are fully sanitized."""
+    path_bearing_exc = RuntimeError(
+        r"Failed loading DLL D:\Private\runtime\ultralytics\backend.dll: access denied"
+    )
+    with patch("importlib.import_module", side_effect=path_bearing_exc):
+        status, err = check_detector_runtime()
+    assert status == "INCOMPATIBLE"
+    assert err == "Ultralytics detector runtime could not be imported"
+    assert "D:\\" not in err
+    assert "Private" not in err
+    assert "backend.dll" not in err
+    assert "access denied" not in err
+
+
+def test_check_detector_runtime_incompatible_version() -> None:
+    """A1-H1: Ultralytics imported with version != 8.4.120 returns INCOMPATIBLE."""
+    mock_mod = MagicMock()
+    mock_mod.__version__ = "8.3.0"
+    with patch("importlib.import_module", return_value=mock_mod):
+        status, err = check_detector_runtime()
+    assert status == "INCOMPATIBLE"
+    assert err == "Ultralytics version '8.3.0' is incompatible (expected 8.4.120)"
+
+
+def test_check_detector_runtime_available() -> None:
+    """A1-H1: Ultralytics imported with version == 8.4.120 returns AVAILABLE."""
+    mock_mod = MagicMock()
+    mock_mod.__version__ = "8.4.120"
+    with patch("importlib.import_module", return_value=mock_mod):
+        status, err = check_detector_runtime()
+    assert status == "AVAILABLE"
+    assert err is None
 
 
 def test_four_point_geometry_parsing(tmp_path: Path) -> None:

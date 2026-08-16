@@ -19,6 +19,7 @@ from meter_reading_inference_service.core import (
     check_core_import_origin,
     check_core_revision,
     check_detector_asset,
+    check_detector_runtime,
     check_ocr_asset,
     check_ocr_runtime,
     get_yaml_calibration_status,
@@ -175,7 +176,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     ocr_runtime_status, ocr_rt_err = check_ocr_runtime()
     ocr_asset_status, ocr_asset_err = check_ocr_asset(settings.ocr_model_path)
 
-    # 6. Load PipelineConfig and derive Detector readiness from config policy
+    # 6. Check Detector runtime & Detector model asset from config policy
+    det_runtime_status, det_rt_err = check_detector_runtime()
     loaded_config = None
     det_asset_status = "NOT_EVALUATED"
     det_asset_err: str | None = None
@@ -204,9 +206,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         det_asset_status = "NOT_EVALUATED"
 
     logger.info(
-        "Readiness preflight: OCR runtime=%s, OCR asset=%s, Detector asset=%s",
+        "Readiness preflight: OCR runtime=%s, OCR asset=%s, Detector runtime=%s, Detector asset=%s",
         ocr_runtime_status,
         ocr_asset_status,
+        det_runtime_status,
         det_asset_status,
     )
 
@@ -254,6 +257,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             calibration_status=cal_status,
             ocr_runtime_status=ocr_runtime_status,
             ocr_asset_status=ocr_asset_status,
+            detector_runtime_status=det_runtime_status,
             detector_asset_status=det_asset_status,
             artifact_storage_status=art_storage_status,
             readiness_reason=readiness_err,
