@@ -1,0 +1,178 @@
+# ==============================================================================
+# Pipeline Configuration Template (Technical Demo & Visualizer)
+# ==============================================================================
+schema_version: "1.0"
+config_id: "pipeline_demo_v1"
+revision: "1.0.0"
+calibration_status: "EXAMPLE_ONLY"
+
+# Quality Gate Policy
+quality:
+  profile_id: "quality_default_v1"
+  revision: "1.0"
+  acceptance_complete: true
+  min_width: 320
+  min_height: 240
+  dark_pixel_threshold: 15
+  max_dark_fraction: 0.90
+  bright_pixel_threshold: 240
+  max_bright_fraction: 0.90
+  blur_metric_id: "laplacian_variance_v1"
+  min_blur_metric: 10.0
+
+# Explicit Localization Profiles
+localization_profiles:
+  vsee_vse3t_station_a_v1:
+    profile_id: "vsee_vse3t_station_a_v1"
+    revision: "1.0"
+    meter_type: "VSEE_VSE3T"
+    capture_context: "station_a_mount"
+    reference_source_width: 640
+    reference_source_height: 480
+    aspect_ratio_tolerance: 0.10
+    display_roi:
+      coordinate_space_id: "source"
+      unit: "NORMALIZED"
+      bbox:
+        x: 0.10
+        y: 0.15
+        width: 0.80
+        height: 0.60
+    geometry:
+      mode: "NO_OP"
+      source: "DEFAULT"
+      input_space_id: "display_crop"
+    reading_value_roi:
+      coordinate_space_id: "working_display"
+      unit: "NORMALIZED"
+      bbox:
+        x: 0.05
+        y: 0.10
+        width: 0.90
+        height: 0.80
+    acceptance_complete: true
+
+  gelex_me40_station_b_v1:
+    profile_id: "gelex_me40_station_b_v1"
+    revision: "1.0"
+    meter_type: "GELEX_ME40"
+    capture_context: "station_b_mount"
+    reference_source_width: 640
+    reference_source_height: 480
+    aspect_ratio_tolerance: 0.10
+    display_roi:
+      coordinate_space_id: "source"
+      unit: "NORMALIZED"
+      bbox:
+        x: 0.10
+        y: 0.15
+        width: 0.80
+        height: 0.60
+    geometry:
+      mode: "NO_OP"
+      source: "DEFAULT"
+      input_space_id: "display_crop"
+    reading_value_roi:
+      coordinate_space_id: "working_display"
+      unit: "NORMALIZED"
+      bbox:
+        x: 0.05
+        y: 0.10
+        width: 0.90
+        height: 0.80
+    acceptance_complete: true
+
+# Validation Profiles
+validation_profiles:
+  vsee_vse3t_val_v1:
+    profile_id: "vsee_vse3t_val_v1"
+    revision: "1.0"
+    meter_type: "VSEE_VSE3T"
+    acceptance_complete: true
+    full_match_pattern: "^[0-9]{6,8}(\\.[0-9]{1,2})?$"
+    decimal_policy: "OPTIONAL"
+    integer_digits_min: 6
+    integer_digits_max: 8
+    fractional_digits_min: 0
+    fractional_digits_max: 2
+    leading_zero_policy: "ALLOW_ANY"
+    numeric_min: "0"
+    numeric_max: "99999999"
+    min_ocr_confidence_for_accept: 0.85
+
+  gelex_me40_val_v1:
+    profile_id: "gelex_me40_val_v1"
+    revision: "1.0"
+    meter_type: "GELEX_ME40"
+    acceptance_complete: true
+    full_match_pattern: "^[0-9]{5,8}(\\.[0-9]{1,2})?$"
+    decimal_policy: "OPTIONAL"
+    integer_digits_min: 5
+    integer_digits_max: 8
+    fractional_digits_min: 0
+    fractional_digits_max: 2
+    leading_zero_policy: "ALLOW_ANY"
+    numeric_min: "0"
+    numeric_max: "99999999"
+    min_ocr_confidence_for_accept: 0.85
+
+# Reading Profiles and Default Bindings
+reading_profiles:
+  vsee_vse3t_reading_v1:
+    profile_id: "vsee_vse3t_reading_v1"
+    meter_type: "VSEE_VSE3T"
+    validation_profile_id: "vsee_vse3t_val_v1"
+  gelex_me40_reading_v1:
+    profile_id: "gelex_me40_reading_v1"
+    meter_type: "GELEX_ME40"
+    validation_profile_id: "gelex_me40_val_v1"
+
+meter_type_reading_profiles:
+  VSEE_VSE3T: "vsee_vse3t_reading_v1"
+  GELEX_ME40: "gelex_me40_reading_v1"
+
+# Decision Engine Policy
+decision:
+  policy_id: "decision_default_v1"
+  version: "1.0"
+  supported_meter_types:
+    - "VSEE_VSE3T"
+    - "GELEX_ME40"
+  manual_localization_acceptance_enabled: true
+  learned_evidence_acceptance_enabled: false
+  persistence_required_for_accept: true
+
+# OCR Recognition Policy
+recognition:
+  reader_id: "paddleocr_v6_reader_v1"
+  logical_model_id: "PP-OCRv6-medium"
+  resolved_model_version: "1.0"
+  model_path: ""
+  allow_model_download: false
+  device: "cpu"
+
+# Learned YOLO Detector Policy
+detector:
+  model_path: "D:\\Models\\meter-reading-engine\\lcd-reading-value-yolo-v1\\best.pt"
+  expected_model_sha256: "81C8DAAF2D68E7C87E6241A923B3E9724F0E5B5130AF70E6DD6CF112751E093C"
+  logical_model_id: "yuva_reading_value_yolo11n"
+  resolved_model_version: "yolo11n_v1"
+  input_space: "working_display"
+  target_class_id: 0
+  target_class_name: "item"
+  conf_threshold: 0.01
+  iou_threshold: 0.50
+  max_det: 20
+  allow_model_download: false
+  device: "cpu"
+  allow_configured_fallback: true
+
+# Artifact Retention Policy
+artifacts:
+  policy_id: "artifacts_default_v1"
+  artifact_root: "local_artifacts"
+  persistence_required: true
+  retain_source: true
+  retain_display: true
+  retain_working_display: true
+  retain_reading_value: true
