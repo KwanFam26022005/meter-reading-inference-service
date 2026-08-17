@@ -124,6 +124,15 @@ async def models_status(request: Request) -> ModelsStatusResponse:
         (config.detector.logical_model_id if config.detector else "none") if config else "none"
     )
 
+    auto_mode_ready = (
+        dependency_verified
+        and (rec_runtime == "AVAILABLE")
+        and (rec_asset == "AVAILABLE")
+        and (det_runtime == "AVAILABLE")
+        and (det_asset == "AVAILABLE")
+        and (art_storage == "AVAILABLE")
+    )
+
     return ModelsStatusResponse(
         status=overall_status,
         ready=configured_ready,
@@ -161,6 +170,7 @@ async def models_status(request: Request) -> ModelsStatusResponse:
             learned_shadow_decision_path_ready=configured_ready,
             learned_shadow_telemetry_ready=shadow_telemetry_ready,
             learned_primary_enabled=settings.enable_learned_primary,
+            auto_mode_ready=auto_mode_ready,
         ),
     )
 

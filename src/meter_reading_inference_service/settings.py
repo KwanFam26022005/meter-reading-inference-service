@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     core_repo_path: Path = Path(r"D:\Projects\meter-reading-engine-v2")
 
     # Expected frozen Core git commit sha
-    expected_core_revision: str = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
+    expected_core_revision: str = "9816d9a9f764460f3583dc18251eca2d953b9af6"
 
     # Optional model path overrides
     ocr_model_path: str = ""

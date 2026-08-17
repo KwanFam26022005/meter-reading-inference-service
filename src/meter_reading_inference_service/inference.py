@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 import logging
+import math
+from pathlib import Path
 import re
 import uuid
 from typing import Any
@@ -32,7 +35,9 @@ from meter_reading_inference_service.errors import (
 )
 from meter_reading_inference_service.schemas import (
     AcceptanceCheckSummary,
+    AutoLocalizationVisual,
     BBoxRegion,
+    ComparisonMetrics,
     DecisionSummary,
     DisplayVisual,
     InferenceProvenance,
@@ -46,6 +51,7 @@ from meter_reading_inference_service.schemas import (
     ReadingSummary,
     ReadingValueVisual,
     RecognitionTrace,
+    ReferenceROI,
     SanitizedFinding,
     ShadowROI,
     SourceIdentityProvenance,
@@ -335,7 +341,7 @@ class InferenceCoordinator:
             effective_loc_profile_id = self.settings.default_localization_profiles.get(
                 meter_type.value
             )
-            if not effective_loc_profile_id:
+            if not effective_loc_profile_id and locator_mode != LocatorMode.AUTO:
                 raise InvalidRequestError(
                     message=f"No explicit localization profile provided and no default mapping configured for meter_type '{meter_type.value}'"
                 )
@@ -656,9 +662,15 @@ class InferenceCoordinator:
         if (
             result.value_localization
             and "learned_localization" in result.value_localization.metadata
+            and input_data.locator_mode == LocatorMode.LEARNED_SHADOW
         ):
             prov_data = result.value_localization.metadata["learned_localization"]
             shadow_vis = self._extract_learned_shadow(prov_data, result)
+
+        # Auto localization extraction
+        auto_vis: AutoLocalizationVisual | None = None
+        if input_data.locator_mode == LocatorMode.AUTO:
+            auto_vis = self._extract_auto_localization(result)
 
         vis_payload = VisualizationPayload(
             source=source_vis,
@@ -666,6 +678,7 @@ class InferenceCoordinator:
             working_display=working_vis,
             reading_value=reading_vis,
             learned_shadow=shadow_vis,
+            auto_localization=auto_vis,
         )
 
         # Provenance
@@ -820,4 +833,100 @@ class InferenceCoordinator:
                 "failure_reason": p.failure_reason,
                 "failure_type": p.failure_type,
             },
+        )
+
+    def _extract_auto_localization(self, result: PipelineResult) -> AutoLocalizationVisual | None:
+        """Extracts AUTO mode localization result and comparison with reference registry if available."""
+        if not result.value_localization or not result.value_localization.region:
+            return None
+
+        val_box = result.value_localization.region.resolved_pixel_bbox
+        if not val_box:
+            return None
+
+        yolo_bbox_dict = {
+            "x": val_box.x,
+            "y": val_box.y,
+            "width": val_box.width,
+            "height": val_box.height,
+        }
+
+        # Check external reference registry
+        ref_registry_path = Path(r"D:\Runtime\meter-reading-demo\reference_rois.json")
+        ref_roi: ReferenceROI | None = None
+        comp_metrics: ComparisonMetrics | None = None
+
+        if ref_registry_path.exists():
+            try:
+                with open(ref_registry_path, "r", encoding="utf-8") as f:
+                    reg = json.load(f)
+                src_sha = result.source.sha256
+                if src_sha in reg:
+                    entry = reg[src_sha]
+                    ref_b = entry.get("bbox", {})
+                    ref_x = float(ref_b.get("x", 0))
+                    ref_y = float(ref_b.get("y", 0))
+                    ref_w = float(ref_b.get("width", 0))
+                    ref_h = float(ref_b.get("height", 0))
+
+                    ref_roi = ReferenceROI(
+                        source_sha256=src_sha,
+                        sample_id=entry.get("sample_id"),
+                        meter_type=entry.get("meter_type"),
+                        reference_type=entry.get("reference_type", "CONFIGURED"),
+                        coordinate_space=entry.get("coordinate_space", "source"),
+                        bbox=ref_b,
+                        used_for_ocr=False,
+                        reference_only=True,
+                    )
+
+                    # Compute comparison metrics (in source space)
+                    yolo_x = float(val_box.x)
+                    yolo_y = float(val_box.y)
+                    yolo_w = float(val_box.width)
+                    yolo_h = float(val_box.height)
+
+                    x_left = max(yolo_x, ref_x)
+                    y_top = max(yolo_y, ref_y)
+                    x_right = min(yolo_x + yolo_w, ref_x + ref_w)
+                    y_bottom = min(yolo_y + yolo_h, ref_y + ref_h)
+
+                    inter_w = max(0.0, x_right - x_left)
+                    inter_h = max(0.0, y_bottom - y_top)
+                    inter_area = inter_w * inter_h
+                    union_area = (yolo_w * yolo_h) + (ref_w * ref_h) - inter_area
+                    iou = (inter_area / union_area) if union_area > 0 else 0.0
+
+                    yolo_cx = yolo_x + yolo_w / 2.0
+                    yolo_cy = yolo_y + yolo_h / 2.0
+                    ref_cx = ref_x + ref_w / 2.0
+                    ref_cy = ref_y + ref_h / 2.0
+                    center_dist = math.hypot(yolo_cx - ref_cx, yolo_cy - ref_cy)
+
+                    comp_metrics = ComparisonMetrics(
+                        iou=round(iou, 4),
+                        center_distance=round(center_dist, 2),
+                        delta_x=round(abs(yolo_x - ref_x), 2),
+                        delta_y=round(abs(yolo_y - ref_y), 2),
+                        delta_width=round(abs(yolo_w - ref_w), 2),
+                        delta_height=round(abs(yolo_h - ref_h), 2),
+                    )
+            except Exception as e:
+                logger.warning("Failed to evaluate reference ROI registry: %s", e)
+
+        return AutoLocalizationVisual(
+            selected_bbox=yolo_bbox_dict,
+            detector_confidence=result.value_localization.confidence,
+            used_for_ocr=True,
+            reference_roi=ref_roi,
+            comparison=comp_metrics,
+            reference_semantic="DISPLAY_PANEL" if ref_roi else None,
+            auto_semantic="ACTIVE_NUMERIC_SEQUENCE",
+            comparison_semantics_match=False if ref_roi else None,
+            comparison_message=(
+                "Reference is DISPLAY_PANEL while AUTO is ACTIVE_NUMERIC_SEQUENCE; "
+                "IoU is not a correctness metric for this comparison."
+                if ref_roi
+                else None
+            ),
         )

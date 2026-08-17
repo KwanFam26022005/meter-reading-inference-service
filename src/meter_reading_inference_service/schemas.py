@@ -54,6 +54,7 @@ class CapabilitiesStatus(BaseModel):
     learned_shadow_decision_path_ready: bool = False
     learned_shadow_telemetry_ready: bool = False
     learned_primary_enabled: bool
+    auto_mode_ready: bool = False
 
 
 class ArtifactsStatus(BaseModel):
@@ -278,12 +279,45 @@ class LearnedShadowVisual(BaseModel):
     provenance: dict[str, Any] = Field(default_factory=dict)
 
 
+class ReferenceROI(BaseModel):
+    source_sha256: str | None = None
+    sample_id: str | None = None
+    meter_type: str | None = None
+    reference_type: str = "CONFIGURED"
+    coordinate_space: str = "source"
+    bbox: dict[str, Any] = Field(default_factory=dict)
+    used_for_ocr: bool = False
+    reference_only: bool = True
+
+
+class ComparisonMetrics(BaseModel):
+    iou: float
+    center_distance: float
+    delta_x: float
+    delta_y: float
+    delta_width: float
+    delta_height: float
+
+
+class AutoLocalizationVisual(BaseModel):
+    selected_bbox: dict[str, Any] | None = None
+    detector_confidence: float | None = None
+    used_for_ocr: bool = True
+    reference_roi: ReferenceROI | None = None
+    comparison: ComparisonMetrics | None = None
+    reference_semantic: str | None = None
+    auto_semantic: str = "ACTIVE_NUMERIC_SEQUENCE"
+    comparison_semantics_match: bool | None = None
+    comparison_message: str | None = None
+
+
 class VisualizationPayload(BaseModel):
     source: SourceVisual
     display: DisplayVisual | None = None
     working_display: WorkingDisplayVisual | None = None
     reading_value: ReadingValueVisual | None = None
     learned_shadow: LearnedShadowVisual | None = None
+    auto_localization: AutoLocalizationVisual | None = None
 
 
 # -----------------------------------------------------------------------------
