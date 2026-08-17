@@ -7,9 +7,9 @@ import io
 import json
 import logging
 import math
-from pathlib import Path
 import re
 import uuid
+from pathlib import Path
 from typing import Any
 
 from meter_reading_engine.contracts import (
@@ -858,7 +858,7 @@ class InferenceCoordinator:
 
         if ref_registry_path.exists():
             try:
-                with open(ref_registry_path, "r", encoding="utf-8") as f:
+                with open(ref_registry_path, encoding="utf-8") as f:
                     reg = json.load(f)
                 src_sha = result.source.sha256
                 if src_sha in reg:

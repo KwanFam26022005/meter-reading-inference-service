@@ -4,18 +4,13 @@ from dataclasses import replace
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import meter_reading_inference_service.inference as inference_module
 from fastapi.testclient import TestClient
 from meter_reading_engine.contracts import (
     DecisionOutcome,
     LocalizationMethod,
-    LocatorMode,
-    MeterType,
-    PixelBBox,
-    RegionRef,
-    RegionRole,
 )
 
+import meter_reading_inference_service.inference as inference_module
 from tests.conftest import create_sample_pipeline_result
 
 
