@@ -17,7 +17,7 @@ def test_models_status_success(test_app: TestClient) -> None:
 
     assert data["ready"] is True
     assert data["status"] == "ready"
-    assert data["core"]["expected_revision"] == "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    assert data["core"]["expected_revision"] == "a68bd884ae2b023fdeadd1ccefe25524a995f080"
     assert data["core"]["revision_verified"] is True
     assert data["core"]["import_origin_verified"] is True
     assert data["core"]["dependency_verified"] is True

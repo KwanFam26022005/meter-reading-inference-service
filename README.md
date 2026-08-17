@@ -18,13 +18,13 @@ This service acts strictly as an adapter and visualization backend for the upcom
 
 ### Frozen Core Pin (A1-001)
 - **Repository:** `https://github.com/KwanFam26022005/meter-reading-engine-v2`
-- **Frozen Branch:** `feature/lcd-v2-learned-localization`
-- **Canonical Revision:** `b185479f023eb8f0aeb8330183b4e2c564c4a465`
+- **Frozen Branch:** `feature/ocr-q1-fixed-decimal-normalization`
+- **Canonical Revision:** `a68bd884ae2b023fdeadd1ccefe25524a995f080`
 
 ### Reproducible Install
 The service pins the exact frozen Core revision in `pyproject.toml` using PEP 508 git dependency specification:
 ```bash
-pip install "meter-reading-engine @ git+https://github.com/KwanFam26022005/meter-reading-engine-v2.git@b185479f023eb8f0aeb8330183b4e2c564c4a465"
+pip install "meter-reading-engine @ git+https://github.com/KwanFam26022005/meter-reading-engine-v2.git@a68bd884ae2b023fdeadd1ccefe25524a995f080"
 pip install -e ".[dev]"
 ```
 
@@ -44,7 +44,7 @@ The service codebase is fully implemented, verified, and test-covered (all unit 
 
 ### Real Demo Ready Prerequisites
 To achieve **`READY`** status for actual live inference on a real device/meter, the following prerequisites must all be satisfied simultaneously:
-1. **Verified Frozen Core:** Git HEAD of Core repository matches `b185479f023eb8f0aeb8330183b4e2c564c4a465`.
+1. **Verified Frozen Core:** Git HEAD of Core repository matches `a68bd884ae2b023fdeadd1ccefe25524a995f080`.
 2. **Calibrated Configuration:** `PIPELINE_CONFIG_PATH` points to a genuinely calibrated YAML configuration (`calibration_status: "CALIBRATED"`).
    > **Important:** `config/pipeline.demo.example.yaml` is **EXAMPLE ONLY / NOT CALIBRATED / NOT REAL-INFERENCE READY**. It contains synthetic ROI fixtures for syntax validation and fake-pipeline testing only.
 3. **Compatible OCR Runtime:** Installed Python packages match `paddleocr==3.7.0`, `paddlex>=3.7.0,<3.8.0`, and `paddlepaddle==3.3.1`.
@@ -98,8 +98,8 @@ Readiness probe and capability snapshot.
   "status": "ready",
   "ready": true,
   "core": {
-    "expected_revision": "b185479f023eb8f0aeb8330183b4e2c564c4a465",
-    "current_revision": "b185479f023eb8f0aeb8330183b4e2c564c4a465",
+    "expected_revision": "a68bd884ae2b023fdeadd1ccefe25524a995f080",
+    "current_revision": "a68bd884ae2b023fdeadd1ccefe25524a995f080",
     "revision_verified": true
   },
   "pipeline_config": {

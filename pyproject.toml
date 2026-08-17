@@ -13,7 +13,7 @@ authors = [
     { name = "Technical Demo Team" }
 ]
 dependencies = [
-    "meter-reading-engine @ git+https://github.com/KwanFam26022005/meter-reading-engine-v2.git@b185479f023eb8f0aeb8330183b4e2c564c4a465",
+    "meter-reading-engine @ git+https://github.com/KwanFam26022005/meter-reading-engine-v2.git@a68bd884ae2b023fdeadd1ccefe25524a995f080",
     "fastapi>=0.110.0",
     "uvicorn>=0.28.0",
     "pydantic>=2.6.0",

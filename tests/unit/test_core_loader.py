@@ -46,14 +46,14 @@ def test_load_pipeline_config_from_yaml() -> None:
 
 def test_core_dependency_pin_assumption() -> None:
     """A1-001: Ensure canonical frozen revision matches service constant."""
-    expected_sha = "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    expected_sha = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
     assert len(expected_sha) == 40
 
 
 def test_check_core_revision_exact_and_mismatch(tmp_path: Path) -> None:
     """A1-002: Exact match returns (True, SHA), mismatch returns (False, SHA), missing path returns (False, None)."""
     core_path = Path(r"D:\Projects\meter-reading-engine-v2")
-    expected = "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    expected = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
     is_verified, current_sha = check_core_revision(core_path, expected)
 
     assert is_verified is True
@@ -342,7 +342,7 @@ def test_zero_download_policy_enforcement(tmp_path: Path) -> None:
 def test_check_core_import_origin_editable() -> None:
     """Finding 1: Verify that the actual editable install resolves to the configured Core path."""
     core_path = Path(r"D:\Projects\meter-reading-engine-v2")
-    expected = "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    expected = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
 
     verified, method = check_core_import_origin(core_path, expected)
 
@@ -374,7 +374,7 @@ def test_check_core_import_origin_codex_attack_rejection(tmp_path: Path) -> None
     shadow_pkg_file.parent.mkdir(parents=True)
     shadow_pkg_file.write_text("# shadow malicious package\n", encoding="utf-8")
 
-    expected_sha = "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    expected_sha = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
     core_path = Path(r"D:\Projects\meter-reading-engine-v2")
 
     # Mock meter_reading_engine.__file__ to point to shadow directory
@@ -421,7 +421,7 @@ def test_check_core_import_origin_vcs_installed_valid(tmp_path: Path) -> None:
     legit_pkg_file.parent.mkdir(parents=True)
     legit_pkg_file.write_text("# legitimate vcs package\n", encoding="utf-8")
 
-    expected_sha = "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    expected_sha = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
     dummy_core_path = tmp_path / "non_existent_core_repo"
 
     mock_pkg = MagicMock()
@@ -460,7 +460,7 @@ def test_check_core_import_origin_vcs_commit_mismatch(tmp_path: Path) -> None:
     legit_pkg_file.parent.mkdir(parents=True)
     legit_pkg_file.write_text("# legitimate vcs package\n", encoding="utf-8")
 
-    expected_sha = "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    expected_sha = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
     wrong_sha = "1111111111111111111111111111111111111111"
     dummy_core_path = tmp_path / "non_existent_core_repo"
 
@@ -500,7 +500,7 @@ def test_check_core_import_origin_vcs_repo_url_mismatch(tmp_path: Path) -> None:
     legit_pkg_file.parent.mkdir(parents=True)
     legit_pkg_file.write_text("# legitimate vcs package\n", encoding="utf-8")
 
-    expected_sha = "b185479f023eb8f0aeb8330183b4e2c564c4a465"
+    expected_sha = "a68bd884ae2b023fdeadd1ccefe25524a995f080"
     dummy_core_path = tmp_path / "non_existent_core_repo"
 
     mock_pkg = MagicMock()
@@ -550,7 +550,7 @@ def test_check_core_revision_handles_dubious_ownership(tmp_path: Path) -> None:
     )
 
     with patch("subprocess.run", return_value=mock_result):
-        verified, sha = check_core_revision(tmp_path, "b185479f023eb8f0aeb8330183b4e2c564c4a465")
+        verified, sha = check_core_revision(tmp_path, "a68bd884ae2b023fdeadd1ccefe25524a995f080")
 
     assert verified is False
     assert sha is None
